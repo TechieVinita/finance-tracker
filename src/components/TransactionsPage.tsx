@@ -1,18 +1,16 @@
-/* eslint-disable prefer-const */
-
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { BudgetVsActualChart } from '@/components/BudgetVsActualChart'
 
-// Predefined categories
 const categories = ['Food', 'Transport', 'Entertainment', 'Health', 'Shopping', 'Others']
 
 type Transaction = {
+  _id?: string
   amount: number
   date: string
   description: string
@@ -35,8 +33,17 @@ export default function TransactionsPage() {
     Others: 0,
   })
 
-  // Handle the form submission (Add/Edit transaction)
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch transactions from MongoDB on load
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      const res = await fetch('/api/transactions')
+      const data = await res.json()
+      setTransactions(data)
+    }
+    fetchTransactions()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!amount || !date || !description || !category) {
       alert('Please fill in all fields')
@@ -56,17 +63,26 @@ export default function TransactionsPage() {
       setTransactions(updatedTransactions)
       setEditingIndex(null)
     } else {
-      setTransactions([...transactions, newTransaction])
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTransaction),
+      })
+
+      if (res.ok) {
+        const savedTxn = await res.json()
+        setTransactions([...transactions, newTransaction])
+      } else {
+        alert('Failed to save transaction.')
+      }
     }
 
-    // Reset form after submission
     setAmount('')
     setDate('')
     setDescription('')
     setCategory('')
   }
 
-  // Handle Edit functionality
   const handleEdit = (index: number) => {
     const txn = transactions[index]
     setAmount(txn.amount.toString())
@@ -76,13 +92,11 @@ export default function TransactionsPage() {
     setEditingIndex(index)
   }
 
-  // Handle Delete functionality
   const handleDelete = (index: number) => {
     const updatedTransactions = transactions.filter((_, i) => i !== index)
     setTransactions(updatedTransactions)
   }
 
-  // Handle Budget Form submission
   const handleBudgetSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const updatedBudgets = { ...categoryBudgets }
@@ -95,7 +109,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="max-w-xl mx-auto p-4">
-      {/* Set Category Budgets Form */}
+      {/* Set Budgets */}
       <h2 className="text-xl font-semibold mt-8 mb-2">Set Category Budgets</h2>
       <form onSubmit={handleBudgetSubmit} className="space-y-4">
         {Object.keys(categoryBudgets).map((category) => (
@@ -112,10 +126,10 @@ export default function TransactionsPage() {
         <Button type="submit">Set Budgets</Button>
       </form>
 
-      {/* Budget vs Actual Chart */}
+      {/* Chart */}
       <BudgetVsActualChart transactions={transactions} categoryBudgets={categoryBudgets} />
 
-      {/* Transaction Form */}
+      {/* Form */}
       <h1 className="text-2xl font-bold mb-4">{editingIndex === null ? 'Add Transaction' : 'Edit Transaction'}</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
