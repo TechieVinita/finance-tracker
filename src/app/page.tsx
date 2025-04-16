@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation';
+"use client";
 
-export default function Home() {
-  redirect('/transactions');
+import TransactionsPage from "@/components/TransactionsPage";
+
+export default function HomePage() {
+  return <TransactionsPage />;
 }
