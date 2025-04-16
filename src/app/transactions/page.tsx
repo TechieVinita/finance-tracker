@@ -84,7 +84,7 @@ export default function TransactionsPage() {
   const handleBudgetSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const updatedBudgets = { ...categoryBudgets }
-    for (let category of Object.keys(categoryBudgets)) {
+    for (const category of Object.keys(categoryBudgets)) {
       const input = document.getElementById(`budget-${category}`) as HTMLInputElement
       updatedBudgets[category] = parseFloat(input.value)
     }
